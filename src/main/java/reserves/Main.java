@@ -26,8 +26,7 @@ public class Main {
         ResultSet resultadoClientes = sentenciaClientes.executeQuery();
 
         if (resultadoClientes.next()) {
-            client(dni);
-            // Redirigir al apartado de clientes
+            client(dni);// Redirigir al apartado de clientes
         } else {
             String consultaAdmins = "SELECT * FROM admins WHERE dni = ?";
             PreparedStatement sentenciaAdmins = conexion.prepareStatement(consultaAdmins);
@@ -35,10 +34,28 @@ public class Main {
             ResultSet resultadoAdmins = sentenciaAdmins.executeQuery();
 
             if (resultadoAdmins.next()) {
-                admin();
-                // Redirigir al apartado de administradores
+                admin();// Redirigir al apartado de administradores
             } else {
-                System.out.println("DNI no encontrado. ¿Desea registrarse?.");
+                System.out.println("DNI no encontrado. ¿Desea registrarse? S/N");
+                String opcion = lector.nextLine();
+                if (opcion.equals("S")) {
+                    System.out.println("Introduce tu DNI: ");
+                    String dniRc = lector.nextLine();
+                    System.out.println("Introduce tu nombre: ");
+                    String nomRc = lector.nextLine();
+                    System.out.println("Introduce tu email: ");
+                    String emailRc = lector.nextLine();
+                    System.out.println("Introduce tu telefono: ");
+                    String telefonoRc = lector.nextLine();
+                    String sqlRC = "INSERT INTO clients (dni, nom, email, telefon) VALUES (?, ?, ?,?)";
+                    PreparedStatement sentenciaCliente = conexion.prepareStatement(consultaClientes);
+                    sentenciaCliente.setString(1, dniRc);
+                    sentenciaCliente.setString(2, nomRc);
+                    sentenciaCliente.setString(3, emailRc);
+                    sentenciaCliente.setString(4, telefonoRc);
+
+
+                }
             }
         }
     }
@@ -74,5 +91,11 @@ public class Main {
 
     public void admin() throws SQLException {
         Scanner lector = new Scanner(System.in);
+
+        String opcio2;
+            System.out.println("Benvingut Admin, seleccioneu una de les opcions:");
+            System.out.println();
+
+
     }
 }
