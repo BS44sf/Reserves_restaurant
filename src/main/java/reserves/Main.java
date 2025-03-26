@@ -202,6 +202,7 @@ public class Main {
             opcio2 = lector.nextLine();
 
             switch (opcio2) {
+
                 case "1":
                     System.out.println();
                     System.out.println("Cantidad de platos restantes. ");
@@ -217,6 +218,7 @@ public class Main {
                     stmt1.close();
                     conn.close();
                 break;
+
                 case "2":
                     System.out.println();
                     System.out.println("Mesas disponibles. ");
@@ -232,6 +234,7 @@ public class Main {
                     stmt3.close();
                     conn2.close();
                 break;
+
                 case "3":
                     System.out.println();
                     System.out.println("Estado de entrega de los pedidos. ");
@@ -249,14 +252,45 @@ public class Main {
                     stmt4.close();
                     conn3.close();
                 break;
+
                 case "4":
+                    System.out.println();
+                    System.out.println("Disponibilidad de las mesas. ");
+                    Connection conn4 = DriverManager.getConnection(DB_URL, USER, PASS);
+                    String tauDisp = "SELECT * FROM taules";
+                    PreparedStatement stmt5 = conn4.prepareStatement(tauDisp);
+                    ResultSet resultadoM4 = stmt5.executeQuery();
+                    while (resultadoM4.next()) {
+                        System.out.print(" Numero de taula: " + resultadoM4.getInt("id_taula"));
+                        System.out.print(", capacitat: " + resultadoM4.getInt("capacitat"));
+                        System.out.println(", Ocupada: " + resultadoM4.getBoolean("ocupada"));
+                    }
+                    System.out.println();
+                    System.out.println("Introduce el numero de la mesa la cual deseas cambiar su estado. ");
+                    Integer numT = lector.nextInt();
+                    String cambDispT = "UPDATE taules SET ocupada = false WHERE id_taula = ?";
+                    PreparedStatement stmt6 = conn4.prepareStatement(cambDispT);
+                    stmt6.setInt(1, numT);
+                    stmt6.executeUpdate();
+                    int filasAfectadas = stmt6.executeUpdate();
 
+                    if (filasAfectadas > 0) {
+                        System.out.println("Mesa actualizada correctamente.");
+                    } else {
+                        System.out.println("Error al actualizar el estado de la mesa.");
+                    }
+                    stmt6.close();
+                    conn4.close();
+                break;
 
+                case "5":
+                    System.out.println("Sortint....");
+                break;
+
+                default:
+                    System.out.println("Error no has seleccionado ninguna opcion correcta.");
+                break;
             }
         }while(!opcio2.equals("5"));
-
-
-
-
     }
 }
