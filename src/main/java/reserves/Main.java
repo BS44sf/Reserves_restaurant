@@ -223,13 +223,15 @@ public class Main {
         Scanner lector = new Scanner(System.in);
         String opcio2;
         do {
+            System.out.println();
             System.out.println("Benvingut Admin, seleccioneu una de les opcions:");
             System.out.println("1. Vegeu quantitat de plats restants. ");
             System.out.println("2. Veure taules disponibles.");
             System.out.println("3. Veure estat de lliurament de les comandes. ");
             System.out.println("4. Canviar disponibilitat de les taules. ");
             System.out.println("5. Cancel·lar Reserva. ");
-            System.out.println("6. Sortir.");
+            System.out.println("6. Gestió menú i productes. ");
+            System.out.println("7. Sortir.");
             opcio2 = lector.nextLine();
 
             switch (opcio2) {
@@ -315,32 +317,146 @@ public class Main {
                 break;
 
                 case "5":
+                    System.out.println();
                     Connection conexion5 = DriverManager.getConnection(DB_URL, USER, PASS);
-                    System.out.println("Vols eliminar la reserva? ");
-                    String respuesta = lector.nextLine();
-                    if (respuesta.equalsIgnoreCase("si")){
-                        String consSql = "SELECT * FROM reservas WHERE dni = ?";
+                        String consSql = "SELECT * FROM reserves";
                         PreparedStatement pstmt5 = conexion5.prepareStatement(consSql);
-                        pstmt5.setString(1, dni);
                         ResultSet rs = pstmt5.executeQuery();
                         while (rs.next()) {
                             System.out.print("Id reserva: " + rs.getInt("id"));
                             System.out.print(", DNI: " + rs.getString("dni"));
                             System.out.print(", Numero de taula: " + rs.getInt("id_taula"));
                             System.out.print(", Data: " + rs.getDate("fecha"));
-                            System.out.println(", Hora: " + rs.getTime("horas"));
+                            System.out.println(", Hora: " + rs.getTime("hora"));
                         }
-                        String deleteRs = "DELETE FROM reservas WHERE dni = ?";
+                        System.out.println("Introdueix el dni del client.");
+                        String dniC = lector.nextLine();
+                        String deleteRs = "DELETE FROM reserves WHERE dni = ?";
                         PreparedStatement pstmt6 = conexion5.prepareStatement(deleteRs);
-                        pstmt6.setString(1, dni);
+                        pstmt6.setString(1, dniC);
                         pstmt6.executeUpdate();
                         System.out.println("Reserva eliminada.");
                         pstmt6.close();
                         conexion5.close();
-                    }
-                    break;
+                break;
 
                 case "6":
+                    System.out.println("Gestió del menú i productes:");
+                    System.out.println("1. Afegir un nou producte.");
+                    System.out.println("2. Comprar productes (actualitzar estoc).");
+                    System.out.println("3. Crear un nou plat al menú.");
+                    System.out.println("4. Tornar.");
+                    String opcioMenu = lector.nextLine();
+
+                    Connection conn6 = DriverManager.getConnection(DB_URL, USER, PASS);
+
+                    switch (opcioMenu) {
+                        case "1":
+                            System.out.print("Nom del producte: ");
+                            String nomProducte = lector.nextLine();
+                            System.out.print("Preu: ");
+                            double preuProducte = Double.parseDouble(lector.nextLine());
+                            System.out.print("ID del proveïdor: ");
+                            int idProveidor = Integer.parseInt(lector.nextLine());
+
+                            String sqlInsertProducte = "INSERT INTO productes (nom, preu, id_proveidor) VALUES (?, ?, ?)";
+                            PreparedStatement stmtInsertProducte = conn6.prepareStatement(sqlInsertProducte);
+                            stmtInsertProducte.setString(1, nomProducte);
+                            stmtInsertProducte.setDouble(2, preuProducte);
+                            stmtInsertProducte.setInt(3, idProveidor);
+                            stmtInsertProducte.executeUpdate();
+                            System.out.println("Producte afegit correctament!");
+                            stmtInsertProducte.close();
+                        break;
+
+                        case "2":
+                            String consulta = "SELECT * FROM productes";
+                            PreparedStatement pstmt = conn6.prepareStatement(consulta);
+                            ResultSet rS = pstmt.executeQuery();
+                            while (rS.next()) {
+                                System.out.print("Id producte: " + rS.getInt("id_producte"));
+                                System.out.print(", Nom: " + rS.getString("nom"));
+                                System.out.print(", Preu: " + rS.getDouble("preu"));
+                                System.out.print(", ID_proveidor: " + rS.getInt("id_proveidor"));
+                                System.out.println(", Stock: " + rS.getInt("stock"));
+                            }
+
+                            System.out.print("ID del producte a comprar: ");
+                            int idProducteCompra = Integer.parseInt(lector.nextLine());
+                            System.out.print("Quantitat a afegir: ");
+                            int quantitatAfegir = Integer.parseInt(lector.nextLine());
+
+                            String sqlUpdateStock = "UPDATE productes SET stock = stock + ? WHERE id_producte = ?";
+                            PreparedStatement stmtUpdateStock = conn6.prepareStatement(sqlUpdateStock);
+                            stmtUpdateStock.setInt(1, quantitatAfegir);
+                            stmtUpdateStock.setInt(2, idProducteCompra);
+                            stmtUpdateStock.executeUpdate();
+                            System.out.println("Stock actualitzat correctament!");
+                            stmtUpdateStock.close();
+                        break;
+
+                        case "3":
+                            System.out.print("Nom del nou plat: ");
+                            String nomPlat = lector.nextLine();
+                            System.out.print("Descripció: ");
+                            String descripcio = lector.nextLine();
+                            System.out.print("Preu: ");
+                            double preuPlat = Double.parseDouble(lector.nextLine());
+                            System.out.print("Quantitat disponible: ");
+                            int quantitatDisponible = Integer.parseInt(lector.nextLine());
+
+                            String sqlInsertPlat = "INSERT INTO menu (nom_plat, descripcio, preu, quantitat_disponible) VALUES (?, ?, ?, ?)";
+                            PreparedStatement stmtInsertPlat = conn6.prepareStatement(sqlInsertPlat, Statement.RETURN_GENERATED_KEYS);
+                            stmtInsertPlat.setString(1, nomPlat);
+                            stmtInsertPlat.setString(2, descripcio);
+                            stmtInsertPlat.setDouble(3, preuPlat);
+                            stmtInsertPlat.setInt(4, quantitatDisponible);
+                            stmtInsertPlat.executeUpdate();
+
+                            ResultSet generatedKeys = stmtInsertPlat.getGeneratedKeys();
+                            int idNouPlat = -1;
+                            if (generatedKeys.next()) {
+                                idNouPlat = generatedKeys.getInt(1);
+                            }
+                            stmtInsertPlat.close();
+
+                            String continuar;
+                            do {
+                                System.out.print("ID del producte per afegir al plat: ");
+                                int idProducte = Integer.parseInt(lector.nextLine());
+                                System.out.print("Quantitat d'aquest producte en el plat: ");
+                                int quantitatProducte = Integer.parseInt(lector.nextLine());
+
+                                String sqlRelacionar = "INSERT INTO menu_productes (id_menu, id_producte, quantitat) VALUES (?, ?, ?)";
+                                PreparedStatement stmtRelacionar = conn6.prepareStatement(sqlRelacionar);
+                                stmtRelacionar.setInt(1, idNouPlat);
+                                stmtRelacionar.setInt(2, idProducte);
+                                stmtRelacionar.setInt(3, quantitatProducte);
+                                stmtRelacionar.executeUpdate();
+                                stmtRelacionar.close();
+
+                                System.out.print("Afegir un altre producte al plat? (si/no): ");
+                                continuar = lector.nextLine();
+                            } while (continuar.equalsIgnoreCase("si"));
+
+                            System.out.println("Nou plat afegit correctament!");
+                        break;
+
+                        case "4":
+                            System.out.println("Tornant al menú principal...");
+                        break;
+
+                        default:
+                            System.out.println("Opció no vàlida!");
+                        break;
+                    }
+
+                    conn6.close();
+                break;
+
+
+
+                case "7":
                     System.out.println("Sortint....");
                 break;
 
@@ -348,6 +464,6 @@ public class Main {
                     System.out.println("Error no has seleccionat cap opció correcta.");
                 break;
             }
-        }while(!opcio2.equals("6"));
+        }while(!opcio2.equals("7"));
     }
 }
