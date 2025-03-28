@@ -21,6 +21,7 @@ public class Main {
 
         Connection conexion = DriverManager.getConnection(DB_URL, USER, PASS);
         Scanner scanner = new Scanner(System.in);
+
         System.out.print("Introdueix el teu DNI: ");
         String dni = scanner.nextLine();
 
@@ -45,12 +46,16 @@ public class Main {
                 if (opcion.equals("S")) {
                     System.out.println("Introdueix el teu DNI: ");
                     String dniRc = lector.nextLine();
+
                     System.out.println("Introdueix el teu nom: ");
                     String nomRc = lector.nextLine();
+
                     System.out.println("Introdueix el teu email: ");
                     String emailRc = lector.nextLine();
+
                     System.out.println("Introdueix el teu telèfon: ");
                     String telefonoRc = lector.nextLine();
+
                     String sqlRC = "INSERT INTO clients (dni, nom, email, telefon) VALUES (?, ?, ?, ?)";
                     PreparedStatement sentenciaCliente = conexion.prepareStatement(sqlRC);
                     sentenciaCliente.setString(1, dniRc);
@@ -84,29 +89,67 @@ public class Main {
                     Connection conexion = DriverManager.getConnection(DB_URL, USER, PASS);
                     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
                     SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+
                     System.out.println("Aquí podeu veure les taules disponibles.");
-                    String taulasDisp = "SELECT * FROM taules WHERE ocupada = false";
+                    String taulasDisp = "SELECT id_taula, capacitat FROM taules WHERE ocupada = false";
                     PreparedStatement stmt17 = conexion.prepareStatement(taulasDisp);
                     ResultSet resultado = stmt17.executeQuery();
+
                     if (!resultado.isBeforeFirst()) {
-                        System.out.println("No es van trobar taules disponibles amb aquesta capacitat.");
+                        System.out.println("No es van trobar taules disponibles.");
+                        break;
                     } else {
                         while (resultado.next()) {
-                            System.out.print("Número de taula: " + resultado.getString("id_taula"));
-                            System.out.println(" Capacitat: " + resultado.getInt("capacitat"));
+                            System.out.print("Número de taula: " + resultado.getInt("id_taula"));
+                            System.out.println("   Capacitat: " + resultado.getInt("capacitat"));
                         }
                     }
-                    System.out.println("Si us plau introduïu el número de la taula que voleu reservar.");
-                    Integer numM = lector.nextInt();
-                    lector.nextLine();
+                    stmt17.close();
 
-                    System.out.println("Introduïu la data en què voleu reservar (YYYY-MM-DD):");
-                    java.util.Date fechaUtil = dateFormat.parse(lector.nextLine());
-                    java.sql.Date fechaSQL = new java.sql.Date(fechaUtil.getTime());
+                    int numM;
+                    while (true) {
+                        System.out.println("Si us plau introduïu el número de la taula que voleu reservar:");
+                        numM = lector.nextInt();
+                        lector.nextLine();
 
-                    System.out.println("Introduïu l'hora en què voleu reservar (HH:mm:ss):");
-                    java.util.Date horaUtil = timeFormat.parse(lector.nextLine());
-                    java.sql.Time horaSQL = new java.sql.Time(horaUtil.getTime());
+                        String checkMesa = "SELECT COUNT(*) FROM taules WHERE id_taula = ? AND ocupada = false";
+                        PreparedStatement stmtCheck = conexion.prepareStatement(checkMesa);
+                        stmtCheck.setInt(1, numM);
+                        ResultSet rsCheck = stmtCheck.executeQuery();
+                        rsCheck.next();
+
+                        if (rsCheck.getInt(1) > 0) {
+                            stmtCheck.close();
+                            break;
+                        } else {
+                            System.out.println("Número de taula no vàlid o ja reservat. Torneu a introduir.");
+                        }
+                        stmtCheck.close();
+                    }
+
+                    java.sql.Date fechaSQL;
+                    while (true) {
+                        try {
+                            System.out.println("Introduïu la data en què voleu reservar (YYYY-MM-DD):");
+                            java.util.Date fechaUtil = dateFormat.parse(lector.nextLine());
+                            fechaSQL = new java.sql.Date(fechaUtil.getTime());
+                            break;
+                        } catch (ParseException e) {
+                            System.out.println("Data no vàlida. Torneu a introduir.");
+                        }
+                    }
+
+                    java.sql.Time horaSQL;
+                    while (true) {
+                        try {
+                            System.out.println("Introduïu l'hora en què voleu reservar (HH:mm:ss):");
+                            java.util.Date horaUtil = timeFormat.parse(lector.nextLine());
+                            horaSQL = new java.sql.Time(horaUtil.getTime());
+                            break;
+                        } catch (ParseException e) {
+                            System.out.println("Hora no vàlida. Torneu a introduir.");
+                        }
+                    }
 
                     String realitzarR = "INSERT INTO reserves(dni, id_taula, fecha, hora) VALUES (?, ?, ?, ?)";
                     PreparedStatement stmt2 = conexion.prepareStatement(realitzarR);
@@ -116,19 +159,21 @@ public class Main {
                     stmt2.setTime(4, horaSQL);
 
                     int filasAfectadas = stmt2.executeUpdate();
-
                     if (filasAfectadas > 0) {
                         System.out.println("Reserva feta amb èxit.");
+                        String ocuparT = "UPDATE taules SET ocupada = true WHERE id_taula = ?";
+                        PreparedStatement stmt3 = conexion.prepareStatement(ocuparT);
+                        stmt3.setInt(1, numM);
+                        stmt3.executeUpdate();
+                        stmt3.close();
                     } else {
                         System.out.println("Error en fer la reserva.");
                     }
-                    String ocuparT = "UPDATE taules SET ocupada = true WHERE id_taula = ?";
-                    PreparedStatement stmt3 = conexion.prepareStatement(ocuparT);
-                    stmt3.setInt(1, numM);
-                    stmt3.executeUpdate();
-                    stmt3.close();
+
+                    stmt2.close();
                     conexion.close();
-                break;
+                    break;
+
 
                 case "2":
                     Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
@@ -136,18 +181,46 @@ public class Main {
                     String mostrarM = "SELECT * FROM menu WHERE quantitat_disponible >= 1";
                     PreparedStatement stmt4 = conn.prepareStatement(mostrarM);
                     ResultSet resultadoM = stmt4.executeQuery();
-                    while (resultadoM.next()) {
-                        System.out.print("Número del plat: " + resultadoM.getInt("id_menu"));
-                        System.out.print(", Nom del plat: " + resultadoM.getString("nom_plat"));
-                        System.out.print(", Descripcio: " + resultadoM.getString("descripcio"));
-                        System.out.print(", Preu: " + resultadoM.getBigDecimal("preu"));
-                        System.out.println(", Quantitat Disponible: " + resultadoM.getInt("quantitat_disponible"));
+
+                    if (!resultadoM.isBeforeFirst()) {
+                        System.out.println("No hi ha plats disponibles.");
+                        break;
+                    } else {
+                        while (resultadoM.next()) {
+                            System.out.print("Número del plat: " + resultadoM.getInt("id_menu"));
+                            System.out.print(",   Nom del plat: " + resultadoM.getString("nom_plat"));
+                            System.out.print(",   Descripcio: " + resultadoM.getString("descripcio"));
+                            System.out.print(",   Preu: " + resultadoM.getBigDecimal("preu"));
+                            System.out.println(",   Quantitat Disponible: " + resultadoM.getInt("quantitat_disponible"));
+                        }
                     }
-                    System.out.println("Què vols demanar? Introdueix el número del plat.");
-                    Integer numP = lector.nextInt();
-                    lector.nextLine();
+                    stmt4.close();
+
+                    int numP;
+                    while (true) {
+                        System.out.println("Què vols demanar? Introdueix el número del plat.");
+                        numP = lector.nextInt();
+                        lector.nextLine();
+
+                        String checkMenu = "SELECT COUNT(*) FROM menu WHERE id_menu = ? AND quantitat_disponible >= 1";
+                        PreparedStatement stmtCheck = conn.prepareStatement(checkMenu);
+                        stmtCheck.setInt(1, numP);
+                        ResultSet rsCheck = stmtCheck.executeQuery();
+                        rsCheck.next();
+
+                        if (rsCheck.getInt(1) > 0) {
+                            stmtCheck.close();
+                            break;
+                        } else {
+                            System.out.println("Número de plat no vàlid o sense disponibilitat. Torneu a introduir.");
+                        }
+                        stmtCheck.close();
+                    }
+
                     System.out.println("Introduïu la quantitat a demanar. ");
                     Integer quanP = lector.nextInt();
+                    lector.nextLine();
+
                     String hacerP = "INSERT INTO comandes(dni, fecha) VALUES (?, ?)";
                     PreparedStatement stmt5 = conn.prepareStatement(hacerP, Statement.RETURN_GENERATED_KEYS);
                     stmt5.setString(1, dni);
@@ -174,47 +247,47 @@ public class Main {
                     } else {
                         System.out.println("Error en fer la reserva.");
                     }
-                    String actQm= "UPDATE menu set quantitat_disponible = quantitat_disponible - ? WHERE id_menu = ?";
+
+                    String actQm = "UPDATE menu set quantitat_disponible = quantitat_disponible - ? WHERE id_menu = ?";
                     PreparedStatement stmt7 = conn.prepareStatement(actQm);
                     stmt7.setInt(1, quanP);
                     stmt7.setInt(2, numP);
                     stmt7.executeUpdate();
+
                     stmt7.close();
                     conn.close();
                 break;
 
+
                 case "3":
                     Connection conexion5 = DriverManager.getConnection(DB_URL, USER, PASS);
-                    System.out.println("Vols eliminar la reserva?");
-                    String respuesta = lector.nextLine();
-                    if (respuesta.equalsIgnoreCase("si")){
-                        String consSql = "SELECT * FROM reservas WHERE dni = ?";
+                        String consSql = "SELECT * FROM reserves WHERE dni = ?";
                         PreparedStatement pstmt5 = conexion5.prepareStatement(consSql);
                         pstmt5.setString(1, dni);
                         ResultSet rs = pstmt5.executeQuery();
                         while (rs.next()) {
                             System.out.print("Id reserva: " + rs.getInt("id"));
-                            System.out.print(", DNI: " + rs.getString("dni"));
-                            System.out.print(", Numero de taula: " + rs.getInt("id_taula"));
-                            System.out.print(", Data: " + rs.getDate("fecha"));
-                            System.out.println(", Hora: " + rs.getTime("horas"));
+                            System.out.print(",   DNI: " + rs.getString("dni"));
+                            System.out.print(",   Numero de taula: " + rs.getInt("id_taula"));
+                            System.out.print(",   Data: " + rs.getDate("fecha"));
+                            System.out.println(",   Hora: " + rs.getTime("hora"));
                         }
-                        String deleteRs = "DELETE FROM reservas WHERE dni = ?";
+                        String deleteRs = "DELETE FROM reserves WHERE dni = ?";
                         PreparedStatement pstmt6 = conexion5.prepareStatement(deleteRs);
                         pstmt6.setString(1, dni);
                         pstmt6.executeUpdate();
                         System.out.println("Reserva eliminada.");
                         pstmt6.close();
                         conexion5.close();
-                    }
                 break;
 
                 case "4":
                     System.out.println("Sortint...");
-                    break;
+                break;
+
                 default:
                     System.out.println("Error no has seleccionat cap opció correcta.");
-                    break;
+                break;
             }
         }while(!opcio.equals("4"));
     }
@@ -243,9 +316,10 @@ public class Main {
                     String plDisp = "SELECT nom_plat, quantitat_disponible FROM menu";
                     PreparedStatement stmt1 = conn.prepareStatement(plDisp);
                     ResultSet resultadoM = stmt1.executeQuery();
+
                     while (resultadoM.next()) {
                         System.out.print("Nom del plat: " + resultadoM.getString("nom_plat"));
-                        System.out.println(", Quantitat Disponible : " + resultadoM.getInt("quantitat_disponible"));
+                        System.out.println(",   Quantitat Disponible : " + resultadoM.getInt("quantitat_disponible"));
                     }
                     System.out.println();
                     stmt1.close();
@@ -259,9 +333,10 @@ public class Main {
                     String mesDisp = "SELECT * FROM taules WHERE ocupada = false";
                     PreparedStatement stmt3 = conn2.prepareStatement(mesDisp);
                     ResultSet resultadoM2 = stmt3.executeQuery();
+
                     while (resultadoM2.next()) {
                         System.out.print(" Numero de taula: " + resultadoM2.getInt("id_taula"));
-                        System.out.println(", capacitat: " + resultadoM2.getInt("capacitat"));
+                        System.out.println(",   capacitat: " + resultadoM2.getInt("capacitat"));
                     }
                     System.out.println();
                     stmt3.close();
@@ -275,11 +350,12 @@ public class Main {
                     String estatP = "SELECT * FROM comandes";
                     PreparedStatement stmt4 = conn3.prepareStatement(estatP);
                     ResultSet resultadoM3 = stmt4.executeQuery();
+
                     while (resultadoM3.next()) {
                         System.out.print(" Número de la comanda: " + resultadoM3.getInt("id_comanda"));
-                        System.out.print(", DNI Client: " + resultadoM3.getString("dni"));
-                        System.out.print(", Data: " + resultadoM3.getDate("fecha"));
-                        System.out.println(", Hora: " + resultadoM3.getTime("hora"));
+                        System.out.print(",   DNI Client: " + resultadoM3.getString("dni"));
+                        System.out.print(",   Data: " + resultadoM3.getDate("fecha"));
+                        System.out.println(",   Estat: " + resultadoM3.getBoolean("estat"));
                     }
                     System.out.println();
                     stmt4.close();
@@ -293,14 +369,16 @@ public class Main {
                     String tauDisp = "SELECT * FROM taules";
                     PreparedStatement stmt5 = conn4.prepareStatement(tauDisp);
                     ResultSet resultadoM4 = stmt5.executeQuery();
+
                     while (resultadoM4.next()) {
                         System.out.print(" Numero de taula: " + resultadoM4.getInt("id_taula"));
-                        System.out.print(", capacitat: " + resultadoM4.getInt("capacitat"));
-                        System.out.println(", Ocupada: " + resultadoM4.getBoolean("ocupada"));
+                        System.out.print(",   capacitat: " + resultadoM4.getInt("capacitat"));
+                        System.out.println(",   Ocupada: " + resultadoM4.getBoolean("ocupada"));
                     }
                     System.out.println();
                     System.out.println("Introdueix el número de la taula que vols canviar el seu estat. ");
                     Integer numT = lector.nextInt();
+                    lector.nextLine();
                     String cambDispT = "UPDATE taules SET ocupada = false WHERE id_taula = ?";
                     PreparedStatement stmt6 = conn4.prepareStatement(cambDispT);
                     stmt6.setInt(1, numT);
@@ -322,12 +400,13 @@ public class Main {
                         String consSql = "SELECT * FROM reserves";
                         PreparedStatement pstmt5 = conexion5.prepareStatement(consSql);
                         ResultSet rs = pstmt5.executeQuery();
+
                         while (rs.next()) {
                             System.out.print("Id reserva: " + rs.getInt("id"));
-                            System.out.print(", DNI: " + rs.getString("dni"));
-                            System.out.print(", Numero de taula: " + rs.getInt("id_taula"));
-                            System.out.print(", Data: " + rs.getDate("fecha"));
-                            System.out.println(", Hora: " + rs.getTime("hora"));
+                            System.out.print(",   DNI: " + rs.getString("dni"));
+                            System.out.print(",   Numero de taula: " + rs.getInt("id_taula"));
+                            System.out.print(",   Data: " + rs.getDate("fecha"));
+                            System.out.println(",   Hora: " + rs.getTime("hora"));
                         }
                         System.out.println("Introdueix el dni del client.");
                         String dniC = lector.nextLine();
@@ -376,10 +455,10 @@ public class Main {
                             ResultSet rS = pstmt.executeQuery();
                             while (rS.next()) {
                                 System.out.print("Id producte: " + rS.getInt("id_producte"));
-                                System.out.print(", Nom: " + rS.getString("nom"));
-                                System.out.print(", Preu: " + rS.getDouble("preu"));
-                                System.out.print(", ID_proveidor: " + rS.getInt("id_proveidor"));
-                                System.out.println(", Stock: " + rS.getInt("stock"));
+                                System.out.print(",   Nom: " + rS.getString("nom"));
+                                System.out.print(",   Preu: " + rS.getDouble("preu"));
+                                System.out.print(",   ID_proveidor: " + rS.getInt("id_proveidor"));
+                                System.out.println(",   Stock: " + rS.getInt("stock"));
                             }
 
                             System.out.print("ID del producte a comprar: ");
@@ -450,12 +529,13 @@ public class Main {
                             ResultSet rDisponible = stmtDisponible.executeQuery();
                             while (rDisponible.next()) {
                                 System.out.print("Nom del plat: " + rDisponible.getString("nom_plat"));
-                                System.out.println(", Quantitat restant:" + rDisponible.getString("quantitat_disponible"));
+                                System.out.println(",   Quantitat restant:" + rDisponible.getString("quantitat_disponible"));
                             }
                             System.out.println("Ingressa el nom del plat.");
                             String nPlat = lector.nextLine();
                             System.out.println("Ingressa la quantitat a agregar.");
                             Integer cantidadIngresada = lector.nextInt();
+                            lector.nextLine();
                             String cSQL = "UPDATE menu SET quantitat_disponible = ? WHERE nom_plat = ?";
                             PreparedStatement stmtCantidadIngresada = conn6.prepareStatement(cSQL);
                             stmtCantidadIngresada.setInt(1, cantidadIngresada);
