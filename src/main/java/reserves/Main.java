@@ -21,7 +21,7 @@ public class Main {
 
         Connection conexion = DriverManager.getConnection(DB_URL, USER, PASS);
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Introduce tu DNI: ");
+        System.out.print("Introdueix el teu DNI: ");
         String dni = scanner.nextLine();
 
         String consultaClientes = "SELECT * FROM clients WHERE dni = ?";
@@ -40,16 +40,16 @@ public class Main {
             if (resultadoAdmins.next()) {
                 admin(dni);// Redirigir al apartado de administradores
             } else {
-                System.out.println("DNI no encontrado. ¿Desea registrarse? S/N");
-                String opcion = lector.nextLine();
+                System.out.println("DNI no trobat. Voleu registrar-vos? S/N");
+                String opcion = lector.nextLine().toLowerCase();
                 if (opcion.equals("S")) {
-                    System.out.println("Introduce tu DNI: ");
+                    System.out.println("Introdueix el teu DNI: ");
                     String dniRc = lector.nextLine();
-                    System.out.println("Introduce tu nombre: ");
+                    System.out.println("Introdueix el teu nom: ");
                     String nomRc = lector.nextLine();
-                    System.out.println("Introduce tu email: ");
+                    System.out.println("Introdueix el teu email: ");
                     String emailRc = lector.nextLine();
-                    System.out.println("Introduce tu telefono: ");
+                    System.out.println("Introdueix el teu telèfon: ");
                     String telefonoRc = lector.nextLine();
                     String sqlRC = "INSERT INTO clients (dni, nom, email, telefon) VALUES (?, ?, ?, ?)";
                     PreparedStatement sentenciaCliente = conexion.prepareStatement(sqlRC);
@@ -59,7 +59,7 @@ public class Main {
                     sentenciaCliente.setString(4, telefonoRc);
                     sentenciaCliente.executeUpdate();
 
-                    System.out.println("Cliente registrado exitosamente.");
+                    System.out.println("Client registrat amb èxit.");
                     sentenciaCliente.close();
                 }
             }
@@ -74,35 +74,37 @@ public class Main {
             System.out.println("Benvingut, seleccioneu una de les opcions:");
             System.out.println("1. Realitzar una reserva.");
             System.out.println("2. Realitzar una comanda.");
-            System.out.println("3. Sortir.");
+            System.out.println("3. Cancel·lar una reserva. ");
+            System.out.println("4. Sortir.");
             opcio = lector.nextLine();
 
             switch (opcio) {
+
                 case "1":
                     Connection conexion = DriverManager.getConnection(DB_URL, USER, PASS);
                     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
                     SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
-                    System.out.println("Aqui puedes ver las mesas disponibles.");
+                    System.out.println("Aquí podeu veure les taules disponibles.");
                     String taulasDisp = "SELECT * FROM taules WHERE ocupada = false";
                     PreparedStatement stmt17 = conexion.prepareStatement(taulasDisp);
                     ResultSet resultado = stmt17.executeQuery();
                     if (!resultado.isBeforeFirst()) {
-                        System.out.println("No se encontraron mesas disponibles con esa capacidad.");
+                        System.out.println("No es van trobar taules disponibles amb aquesta capacitat.");
                     } else {
                         while (resultado.next()) {
-                            System.out.print("Número de mesa: " + resultado.getString("id_taula"));
-                            System.out.println(" Capacidad: " + resultado.getInt("capacitat"));
+                            System.out.print("Número de taula: " + resultado.getString("id_taula"));
+                            System.out.println(" Capacitat: " + resultado.getInt("capacitat"));
                         }
                     }
-                    System.out.println("Por favor ingrese el numero de la mesa que desea reservar.");
+                    System.out.println("Si us plau introduïu el número de la taula que voleu reservar.");
                     Integer numM = lector.nextInt();
                     lector.nextLine();
 
-                    System.out.println("Introduzca la fecha en la que quiere reservar (YYYY-MM-DD):");
+                    System.out.println("Introduïu la data en què voleu reservar (YYYY-MM-DD):");
                     java.util.Date fechaUtil = dateFormat.parse(lector.nextLine());
                     java.sql.Date fechaSQL = new java.sql.Date(fechaUtil.getTime());
 
-                    System.out.println("Introduzca la hora en la que quiere reservar (HH:mm:ss):");
+                    System.out.println("Introduïu l'hora en què voleu reservar (HH:mm:ss):");
                     java.util.Date horaUtil = timeFormat.parse(lector.nextLine());
                     java.sql.Time horaSQL = new java.sql.Time(horaUtil.getTime());
 
@@ -116,9 +118,9 @@ public class Main {
                     int filasAfectadas = stmt2.executeUpdate();
 
                     if (filasAfectadas > 0) {
-                        System.out.println("Reserva realizada con éxito.");
+                        System.out.println("Reserva feta amb èxit.");
                     } else {
-                        System.out.println("Error al realizar la reserva.");
+                        System.out.println("Error en fer la reserva.");
                     }
                     String ocuparT = "UPDATE taules SET ocupada = true WHERE id_taula = ?";
                     PreparedStatement stmt3 = conexion.prepareStatement(ocuparT);
@@ -127,9 +129,10 @@ public class Main {
                     stmt3.close();
                     conexion.close();
                 break;
+
                 case "2":
                     Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
-                    System.out.println("Aqui tienes el Menu. ");
+                    System.out.println("Aquí tens el Menu. ");
                     String mostrarM = "SELECT * FROM menu WHERE quantitat_disponible >= 1";
                     PreparedStatement stmt4 = conn.prepareStatement(mostrarM);
                     ResultSet resultadoM = stmt4.executeQuery();
@@ -140,10 +143,10 @@ public class Main {
                         System.out.print(", Preu: " + resultadoM.getBigDecimal("preu"));
                         System.out.println(", Quantitat Disponible: " + resultadoM.getInt("quantitat_disponible"));
                     }
-                    System.out.println("¿Que deseas pedir? Introduce el numero del plato.");
+                    System.out.println("Què vols demanar? Introdueix el número del plat.");
                     Integer numP = lector.nextInt();
                     lector.nextLine();
-                    System.out.println("Introduce la cantidad a pedir. ");
+                    System.out.println("Introduïu la quantitat a demanar. ");
                     Integer quanP = lector.nextInt();
                     String hacerP = "INSERT INTO comandes(dni, fecha) VALUES (?, ?)";
                     PreparedStatement stmt5 = conn.prepareStatement(hacerP, Statement.RETURN_GENERATED_KEYS);
@@ -167,9 +170,9 @@ public class Main {
                     int fAc = stmt6.executeUpdate();
 
                     if (fAc > 0) {
-                        System.out.println("Pedido realizado con éxito.");
+                        System.out.println("Comanda realitzada amb èxit.");
                     } else {
-                        System.out.println("Error al realizar la reserva.");
+                        System.out.println("Error en fer la reserva.");
                     }
                     String actQm= "UPDATE menu set quantitat_disponible = quantitat_disponible - ? WHERE id_menu = ?";
                     PreparedStatement stmt7 = conn.prepareStatement(actQm);
@@ -179,14 +182,41 @@ public class Main {
                     stmt7.close();
                     conn.close();
                 break;
+
                 case "3":
+                    Connection conexion5 = DriverManager.getConnection(DB_URL, USER, PASS);
+                    System.out.println("Vols eliminar la reserva?");
+                    String respuesta = lector.nextLine();
+                    if (respuesta.equalsIgnoreCase("si")){
+                        String consSql = "SELECT * FROM reservas WHERE dni = ?";
+                        PreparedStatement pstmt5 = conexion5.prepareStatement(consSql);
+                        pstmt5.setString(1, dni);
+                        ResultSet rs = pstmt5.executeQuery();
+                        while (rs.next()) {
+                            System.out.print("Id reserva: " + rs.getInt("id"));
+                            System.out.print(", DNI: " + rs.getString("dni"));
+                            System.out.print(", Numero de taula: " + rs.getInt("id_taula"));
+                            System.out.print(", Data: " + rs.getDate("fecha"));
+                            System.out.println(", Hora: " + rs.getTime("horas"));
+                        }
+                        String deleteRs = "DELETE FROM reservas WHERE dni = ?";
+                        PreparedStatement pstmt6 = conexion5.prepareStatement(deleteRs);
+                        pstmt6.setString(1, dni);
+                        pstmt6.executeUpdate();
+                        System.out.println("Reserva eliminada.");
+                        pstmt6.close();
+                        conexion5.close();
+                    }
+                break;
+
+                case "4":
                     System.out.println("Sortint...");
                     break;
                 default:
-                    System.out.println("Error no has seleccionado ninguna opcion correcta.");
+                    System.out.println("Error no has seleccionat cap opció correcta.");
                     break;
             }
-        }while(!opcio.equals("3"));
+        }while(!opcio.equals("4"));
     }
 
     public void admin(String dni) throws SQLException {
@@ -194,24 +224,25 @@ public class Main {
         String opcio2;
         do {
             System.out.println("Benvingut Admin, seleccioneu una de les opcions:");
-            System.out.println("1. Ver cantidad de platos restantes. ");
-            System.out.println("2. Ver mesas disponibles. ");
-            System.out.println("3. Ver estado de entrega de los pedidos. ");
-            System.out.println("4. Cambiar disponibilidad de las mesas. ");
-            System.out.println("5. Salir.");
+            System.out.println("1. Vegeu quantitat de plats restants. ");
+            System.out.println("2. Veure taules disponibles.");
+            System.out.println("3. Veure estat de lliurament de les comandes. ");
+            System.out.println("4. Canviar disponibilitat de les taules. ");
+            System.out.println("5. Cancel·lar Reserva. ");
+            System.out.println("6. Sortir.");
             opcio2 = lector.nextLine();
 
             switch (opcio2) {
 
                 case "1":
                     System.out.println();
-                    System.out.println("Cantidad de platos restantes. ");
+                    System.out.println("Quantitat de plats restants. ");
                     Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
                     String plDisp = "SELECT nom_plat, quantitat_disponible FROM menu";
                     PreparedStatement stmt1 = conn.prepareStatement(plDisp);
                     ResultSet resultadoM = stmt1.executeQuery();
                     while (resultadoM.next()) {
-                        System.out.print("Nombre del plato: " + resultadoM.getString("nom_plat"));
+                        System.out.print("Nom del plat: " + resultadoM.getString("nom_plat"));
                         System.out.println(", Quantitat Disponible : " + resultadoM.getInt("quantitat_disponible"));
                     }
                     System.out.println();
@@ -221,7 +252,7 @@ public class Main {
 
                 case "2":
                     System.out.println();
-                    System.out.println("Mesas disponibles. ");
+                    System.out.println("Taules disponibles. ");
                     Connection conn2 = DriverManager.getConnection(DB_URL, USER, PASS);
                     String mesDisp = "SELECT * FROM taules WHERE ocupada = false";
                     PreparedStatement stmt3 = conn2.prepareStatement(mesDisp);
@@ -237,15 +268,15 @@ public class Main {
 
                 case "3":
                     System.out.println();
-                    System.out.println("Estado de entrega de los pedidos. ");
+                    System.out.println("Estat de lliurament de les comandes. ");
                     Connection conn3 = DriverManager.getConnection(DB_URL, USER, PASS);
                     String estatP = "SELECT * FROM comandes";
                     PreparedStatement stmt4 = conn3.prepareStatement(estatP);
                     ResultSet resultadoM3 = stmt4.executeQuery();
                     while (resultadoM3.next()) {
-                        System.out.print(" Numero del pedido: " + resultadoM3.getInt("id_comanda"));
-                        System.out.print(", DNI Cliente: " + resultadoM3.getString("dni"));
-                        System.out.print(", Fecha: " + resultadoM3.getDate("fecha"));
+                        System.out.print(" Número de la comanda: " + resultadoM3.getInt("id_comanda"));
+                        System.out.print(", DNI Client: " + resultadoM3.getString("dni"));
+                        System.out.print(", Data: " + resultadoM3.getDate("fecha"));
                         System.out.println(", Hora: " + resultadoM3.getTime("hora"));
                     }
                     System.out.println();
@@ -255,7 +286,7 @@ public class Main {
 
                 case "4":
                     System.out.println();
-                    System.out.println("Disponibilidad de las mesas. ");
+                    System.out.println("Disponibilitat de les taules. ");
                     Connection conn4 = DriverManager.getConnection(DB_URL, USER, PASS);
                     String tauDisp = "SELECT * FROM taules";
                     PreparedStatement stmt5 = conn4.prepareStatement(tauDisp);
@@ -266,7 +297,7 @@ public class Main {
                         System.out.println(", Ocupada: " + resultadoM4.getBoolean("ocupada"));
                     }
                     System.out.println();
-                    System.out.println("Introduce el numero de la mesa la cual deseas cambiar su estado. ");
+                    System.out.println("Introdueix el número de la taula que vols canviar el seu estat. ");
                     Integer numT = lector.nextInt();
                     String cambDispT = "UPDATE taules SET ocupada = false WHERE id_taula = ?";
                     PreparedStatement stmt6 = conn4.prepareStatement(cambDispT);
@@ -275,22 +306,48 @@ public class Main {
                     int filasAfectadas = stmt6.executeUpdate();
 
                     if (filasAfectadas > 0) {
-                        System.out.println("Mesa actualizada correctamente.");
+                        System.out.println("Taula actualitzada correctament.");
                     } else {
-                        System.out.println("Error al actualizar el estado de la mesa.");
+                        System.out.println("Error en actualitzar l'estat de taula.");
                     }
                     stmt6.close();
                     conn4.close();
                 break;
 
                 case "5":
+                    Connection conexion5 = DriverManager.getConnection(DB_URL, USER, PASS);
+                    System.out.println("Vols eliminar la reserva? ");
+                    String respuesta = lector.nextLine();
+                    if (respuesta.equalsIgnoreCase("si")){
+                        String consSql = "SELECT * FROM reservas WHERE dni = ?";
+                        PreparedStatement pstmt5 = conexion5.prepareStatement(consSql);
+                        pstmt5.setString(1, dni);
+                        ResultSet rs = pstmt5.executeQuery();
+                        while (rs.next()) {
+                            System.out.print("Id reserva: " + rs.getInt("id"));
+                            System.out.print(", DNI: " + rs.getString("dni"));
+                            System.out.print(", Numero de taula: " + rs.getInt("id_taula"));
+                            System.out.print(", Data: " + rs.getDate("fecha"));
+                            System.out.println(", Hora: " + rs.getTime("horas"));
+                        }
+                        String deleteRs = "DELETE FROM reservas WHERE dni = ?";
+                        PreparedStatement pstmt6 = conexion5.prepareStatement(deleteRs);
+                        pstmt6.setString(1, dni);
+                        pstmt6.executeUpdate();
+                        System.out.println("Reserva eliminada.");
+                        pstmt6.close();
+                        conexion5.close();
+                    }
+                    break;
+
+                case "6":
                     System.out.println("Sortint....");
                 break;
 
                 default:
-                    System.out.println("Error no has seleccionado ninguna opcion correcta.");
+                    System.out.println("Error no has seleccionat cap opció correcta.");
                 break;
             }
-        }while(!opcio2.equals("5"));
+        }while(!opcio2.equals("6"));
     }
 }
