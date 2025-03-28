@@ -345,7 +345,8 @@ public class Main {
                     System.out.println("1. Afegir un nou producte.");
                     System.out.println("2. Comprar productes (actualitzar estoc).");
                     System.out.println("3. Crear un nou plat al menú.");
-                    System.out.println("4. Tornar.");
+                    System.out.println("4. Actualitzar quantitat plats");
+                    System.out.println("5. Tornar.");
                     String opcioMenu = lector.nextLine();
 
                     Connection conn6 = DriverManager.getConnection(DB_URL, USER, PASS);
@@ -443,6 +444,28 @@ public class Main {
                         break;
 
                         case "4":
+                            System.out.println("Quantitat disponible: ");
+                            String disponible = "SELECT nom_plat, quantitat_disponible FROM menu";
+                            PreparedStatement stmtDisponible = conn6.prepareStatement(disponible);
+                            ResultSet rDisponible = stmtDisponible.executeQuery();
+                            while (rDisponible.next()) {
+                                System.out.print("Nom del plat: " + rDisponible.getString("nom_plat"));
+                                System.out.println(", Quantitat restant:" + rDisponible.getString("quantitat_disponible"));
+                            }
+                            System.out.println("Ingressa el nom del plat.");
+                            String nPlat = lector.nextLine();
+                            System.out.println("Ingressa la quantitat a agregar.");
+                            Integer cantidadIngresada = lector.nextInt();
+                            String cSQL = "UPDATE menu SET quantitat_disponible = ? WHERE nom_plat = ?";
+                            PreparedStatement stmtCantidadIngresada = conn6.prepareStatement(cSQL);
+                            stmtCantidadIngresada.setInt(1, cantidadIngresada);
+                            stmtCantidadIngresada.setString(2, nPlat);
+                            stmtCantidadIngresada.executeUpdate();
+                            System.out.println("Quantitat ingressa correctament!");
+                            stmtCantidadIngresada.close();
+                        break;
+
+                        case "5":
                             System.out.println("Tornant al menú principal...");
                         break;
 
@@ -453,8 +476,6 @@ public class Main {
 
                     conn6.close();
                 break;
-
-
 
                 case "7":
                     System.out.println("Sortint....");
